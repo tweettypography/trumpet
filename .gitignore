@@ -26,3 +26,12 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+
+npm-debug.log
+.DS_Store
+.idea
+*.bak
+build.txt
+config/local.js
+config/runtime.json
+public-optimized
