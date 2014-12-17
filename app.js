@@ -8,6 +8,7 @@ var controller = require('./controller');
 var authMiddleware = require('./middleware/auth');
 var gzipMiddleware = require('./middleware/gzip');
 var sessionMiddleware = require('./middleware/session');
+var spotifyMiddleware = require('./middleware/spotify');
 var packageJson = require('./package.json');
 
 // Run init just once to get the server up and running
@@ -47,6 +48,7 @@ var initApp = function initApp() {
 	// These run after the static files are served and before the routes
 	app.disable('etag');
 	app.use(sessionMiddleware);
+	app.use(spotifyMiddleware);
 
 	// Destroy the sesion and redirect to the login page
 	app.route('/logout')
@@ -63,7 +65,7 @@ var initApp = function initApp() {
 	// The index page
 	app.route('/')
 		.all(authMiddleware.allUsers)
-		.get(controller.index);
+		.get(controller.feed);
 		
 	// The search page
 	app.route('/search')

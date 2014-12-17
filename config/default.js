@@ -9,6 +9,7 @@ module.exports = {
 	},
 	auth: {
 		spotify: {
+			scopes: ['playlist-read-private', 'playlist-modify-public', 'playlist-modify-private', 'user-read-email'],
 			redirectUri: 'http://localhost:3000/auth/spotify'
 		}
 	},
@@ -18,5 +19,10 @@ module.exports = {
 	redis: {
 		host: '127.0.0.1',
 		port: 6379
+	},
+	mongo: {
+		host: '127.0.0.1',
+		db: 'TrumpetMusic',
+		port: 27017
 	}
 };
