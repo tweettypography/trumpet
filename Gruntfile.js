@@ -50,7 +50,7 @@ module.exports = function(grunt) {
 					_: false
 				},
 				files: {
-					src: ['Gruntfile.js', 'app.js', 'middleware/*.js']
+					src: ['Gruntfile.js', 'app.js', 'controller.js', 'middleware/*.js']
 				}
 			}
 		},
