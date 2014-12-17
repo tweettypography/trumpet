@@ -1,4 +1,5 @@
 var config = require('config');
+var crypto = require('crypto');
 var _ = require('underscore');
 
 var mongo = require('./data/mongo');
@@ -26,6 +27,10 @@ function getConfig(req, options) {
 		}, options);
 }
 
+function hash(data) {
+	return crypto.createHash('sha256').update(data).digest('hex');
+}
+
 module.exports = {
 	auth: {},
 	rest: {}
@@ -44,7 +49,7 @@ module.exports.logout = function logout(req, res) {
 };
 
 module.exports.login = function login(req, res) {
-	var state = req.sessionID; // Hash this
+	var state = hash(req.sessionID);
 	var options = {
 		authorizeURL: req.spotifyApi.createAuthorizeURL(config.auth.spotify.scopes, state)
 	};
@@ -65,7 +70,7 @@ module.exports.index = function index(req, res) {
 };
 
 module.exports.auth.spotify = function authSpotify(req, res, next) {
-	var state = req.sessionID; // Hash this
+	var state = hash(req.sessionID);
 	
 	if (req.query.code && req.query.state === state) {
 		req.spotifyApi.authorizationCodeGrant(req.query.code)
