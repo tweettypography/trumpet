@@ -10,8 +10,7 @@ var staticBase = config.endpoints.defaultStaticBase + (config.endpoints.versione
 function getConfig(req, options) {
 	var browserConfig = JSON.stringify({
 		rest: config.endpoints.rest,
-		version: packageJson.version,
-		user: req.session.user
+		version: packageJson.version
 	});
 	
 	if (options && options.data) {
@@ -41,7 +40,7 @@ module.exports.logout = function(req, res) {
 
 	req.session.destroy();
 
-	if (isAjaxRequest) {
+	if (!isAjaxRequest) {
 		res.redirect('/login');
 	} else {
 		res.status(200).send('OK');
@@ -62,14 +61,13 @@ module.exports.feed = function(req, res, next) {
 		data: {}
 	};
 	
-	userModel.getFeed(req.spotifyApi, req.session.user.id, function(err, feed) {
-		if (err) {
-			next(err);
-		} else {
-			options.data.feed = feed;
+	userModel.getFeed(req.spotifyApi, req.session.user.id)
+		.then(function(user) {
+			options.data.user = user;
 			res.render('index', getConfig(req, options));
-		}
-	});
+		}, function(err) {
+			next(err);
+		});
 };
 
 module.exports.index = function(req, res) {
@@ -93,11 +91,12 @@ module.exports.auth.spotify = function(req, res, next) {
 				
 				return req.spotifyApi.getMe();
 			})
-			.then(function(data) {
+			.then(function(user) {
 				var redirectPath = req.session.redirectPath || '/';
 				delete req.session.redirectPath;
 				
-				req.session.user = data;
+				req.session.email = user.email;
+				req.session.user = _.pick(user, 'display_name', 'external_urls', 'images', 'id');
 				
 				res.redirect(redirectPath);
 			})
@@ -109,13 +108,12 @@ module.exports.auth.spotify = function(req, res, next) {
 	}
 };
 
-module.exports.rest.feed = function(req, res) {	
-	userModel.getFeed(req.spotifyApi, req.session.user.id, function(err, feed) {
-		if (err) {
+module.exports.rest.feed = function(req, res) {
+	userModel.getFeed(req.spotifyApi, req.session.user.id)
+		.then(function(user) {
+			res.json(_.defaults(user, req.session.user));
+		}, function(err) {
 			console.error('Failed to get feed for:', req.session.user.id, err);
-			res.status(500).send('Internal Server Error')
-		} else {
-			res.json(feed);
-		}
-	});
+			res.status(500).send('Internal Server Error');
+		});
 };

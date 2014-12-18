@@ -5,7 +5,7 @@ var _ = require('underscore');
 var mongo = require('./mongo');
 
 var userSchema = mongo.Schema({
-	_id: {
+	id: {
 		type: String,
 		index: { unique: true }
 	},
@@ -62,23 +62,23 @@ function initFeed(spotifyApi, userId) {
 		.then(function(playlists) {
 			playlists = (playlists && playlists.items) || [];
 			
-			// Extract the list of users
+			// Extract the list of users (someday we need to start pulling the Display Names)
 			var following = usersFromPlaylists(playlists, userId);
 			
 			// If we actually found some people to follow we want to flag the fact that they were automatically added
 			var autoInit = following.length > 0;
 			
-			return userModel.findOneAndUpdate({_id: userId}, {_id: userId, following: following, autoInit: autoInit}, {upsert: true}).exec();
+			return userModel.findOneAndUpdate({id: userId}, {id: userId, following: following, autoInit: autoInit}, {upsert: true}).exec();
 		})
 		.then(function(user) {
 			return populateFeed(spotifyApi, user);
 		});
 }
 
-userSchema.statics.getFeed = function(spotifyApi, userId, callback) {
+userSchema.statics.getFeed = function(spotifyApi, userId) {
 	// We save details of the user's feed in Mongo
-	userModel.findOne({
-			_id: userId
+	return userModel.findOne({
+			id: userId
 		})
 		.exec()
 		.then(function(user) {
@@ -106,11 +106,6 @@ userSchema.statics.getFeed = function(spotifyApi, userId, callback) {
 						
 						return user;
 					});
-		})
-		.then(function(user) {
-			callback(null, user.feed);
-		}, function(err) {
-			callback(err);
 		});
 };
 
