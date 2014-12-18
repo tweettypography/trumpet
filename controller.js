@@ -32,10 +32,11 @@ function hash(data) {
 }
 
 module.exports = {
-	auth: {}
+	auth: {},
+	rest: {}
 };
 
-module.exports.logout = function logout(req, res) {
+module.exports.logout = function(req, res) {
 	var isAjaxRequest = (req.get('X-Requested-With') === 'XMLHttpRequest');
 
 	req.session.destroy();
@@ -47,7 +48,7 @@ module.exports.logout = function logout(req, res) {
 	}
 };
 
-module.exports.login = function login(req, res) {
+module.exports.login = function(req, res) {
 	var state = hash(req.sessionID);
 	var options = {
 		authorizeURL: req.spotifyApi.createAuthorizeURL(config.auth.spotify.scopes, state)
@@ -56,8 +57,7 @@ module.exports.login = function login(req, res) {
 	res.render('login', getConfig(req, options));
 };
 
-module.exports.feed = function feed(req, res, next) {
-	var isAjaxRequest = (req.get('X-Requested-With') === 'XMLHttpRequest');
+module.exports.feed = function(req, res, next) {
 	var options = {
 		data: {}
 	};
@@ -72,11 +72,11 @@ module.exports.feed = function feed(req, res, next) {
 	});
 };
 
-module.exports.index = function index(req, res) {
+module.exports.index = function(req, res) {
 	res.render('index', getConfig(req));
 };
 
-module.exports.auth.spotify = function authSpotify(req, res, next) {
+module.exports.auth.spotify = function(req, res, next) {
 	var state = hash(req.sessionID);
 	
 	if (req.query.code && req.query.state === state) {
@@ -107,4 +107,15 @@ module.exports.auth.spotify = function authSpotify(req, res, next) {
 	} else {
 		res.redirect('/login');
 	}
+};
+
+module.exports.rest.feed = function(req, res) {	
+	userModel.getFeed(req.spotifyApi, req.session.user.id, function(err, feed) {
+		if (err) {
+			console.error('Failed to get feed for:', req.session.user.id, err);
+			res.status(500).send('Internal Server Error')
+		} else {
+			res.json(feed);
+		}
+	});
 };

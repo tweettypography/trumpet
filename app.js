@@ -81,6 +81,11 @@ var initApp = function initApp() {
 	app.route('/playlist/:id')
 		.all(authMiddleware.allUsers)
 		.get(controller.index);
+		
+	// The feed rest route
+	app.route('/rest/feed')
+		.all(authMiddleware.allUsers)
+		.get(controller.rest.feed);
 
 	// Display errors when we are in development mode
 	app.use(errorHandler({
