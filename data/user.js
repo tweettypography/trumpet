@@ -13,7 +13,8 @@ var userSchema = mongo.Schema({
 		type: String,
 		ref: 'User'
 	}],
-	autoInit: Boolean
+	autoInit: Boolean,
+	feed: {}
 });
 
 // Cut down on the respose size by extracting only the necessary playlist properties
@@ -74,10 +75,34 @@ userSchema.statics.getFeed = function(spotifyApi, userId, callback) {
 		})
 		.exec()
 		.then(function(user) {
-			if (!user || user.following.length < 1) {
-				initFeed(spotifyApi, userId, callback);
-			} else {
-				populateFeed(spotifyApi, user.following, callback);
+			// TO-DO: This section is super ugly. Clean it up
+			try {
+				if (!user || user.following.length < 1) {
+					initFeed(spotifyApi, userId, callback);
+				} else {
+					if (user.feed && user.feed.expires > Date.now()) {
+						callback(null, user.feed.data);
+					} else {
+						populateFeed(spotifyApi, user.following, function (err, data) {
+							if (!err && data) {
+								user.feed = {
+									expires: Date.now() + 600000,
+									data: data
+								};
+								
+								user.save(function(err) {
+									if (err) {
+										console.error(err);
+									}
+								});
+							}
+							
+							callback(err, data);
+						});
+					}
+				}
+			} catch (ex) {
+				callback(ex, null);
 			}
 		}, callback);
 };
