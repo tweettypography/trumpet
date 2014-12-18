@@ -2,8 +2,8 @@ var config = require('config');
 var crypto = require('crypto');
 var _ = require('underscore');
 
-var mongo = require('./data/mongo');
 var packageJson = require('./package.json');
+var userModel = require('./data/user.js');
 
 var staticBase = config.endpoints.defaultStaticBase + (config.endpoints.versionedDir ? packageJson.version + '/' : '');
 
@@ -32,8 +32,7 @@ function hash(data) {
 }
 
 module.exports = {
-	auth: {},
-	rest: {}
+	auth: {}
 };
 
 module.exports.logout = function logout(req, res) {
@@ -41,7 +40,7 @@ module.exports.logout = function logout(req, res) {
 
 	req.session.destroy();
 
-	if (!isAjaxRequest) {
+	if (isAjaxRequest) {
 		res.redirect('/login');
 	} else {
 		res.status(200).send('OK');
@@ -57,12 +56,20 @@ module.exports.login = function login(req, res) {
 	res.render('login', getConfig(req, options));
 };
 
-module.exports.feed = function feed(req, res) {
+module.exports.feed = function feed(req, res, next) {
+	var isAjaxRequest = (req.get('X-Requested-With') === 'XMLHttpRequest');
 	var options = {
 		data: {}
 	};
 	
-	res.render('index', getConfig(req, options));
+	userModel.getFeed(req.spotifyApi, req.session.user.id, function(err, feed) {
+		if (err) {
+			next(err);
+		} else {
+			options.data.feed = feed;
+			res.render('index', getConfig(req, options));
+		}
+	});
 };
 
 module.exports.index = function index(req, res) {
