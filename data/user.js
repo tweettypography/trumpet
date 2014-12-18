@@ -109,5 +109,16 @@ userSchema.statics.getFeed = function(spotifyApi, userId) {
 		});
 };
 
+userSchema.pre('save', function (next) {
+	var user = this;
+
+	if (user.autoInit && user.isModified('following')) {
+		user.autoInit = false;
+	}
+
+	next();
+});
+
+
 var userModel = mongo.model('User', userSchema);
 module.exports = userModel;
